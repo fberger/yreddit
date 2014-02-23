@@ -78,13 +78,16 @@ def watched_videos(youtube):
         yield video['contentDetails']['videoId']
 
 def main():
-    youtube = client()
-    watched_videos_ids = set(watched_videos(youtube))
-    playlist = get_fresh_playlist(youtube, "Today's top reddit videos")
-    for url in get_videos_by_topness():
-        video_id = to_id(url)
-        if video_id not in watched_videos_ids:
-            add_video_url(youtube, playlist, video_id)
-
+    try:
+        youtube = client()
+        watched_videos_ids = set(watched_videos(youtube))
+        playlist = get_fresh_playlist(youtube, "Today's top reddit videos")
+        for url in get_videos_by_topness():
+            video_id = to_id(url)
+            if video_id not in watched_videos_ids:
+                add_video_url(youtube, playlist, video_id)
+    except:
+        logging.exception('Unexpected error')
+        
 if __name__ == '__main__':
     main()
