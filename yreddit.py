@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import praw
 from apiclient.discovery import build
-from apiclient.http import HttpError
+from apiclient.http import HttpError, BatchHttpRequest
 from oauth2client.file import Storage
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.tools import run
@@ -50,12 +50,20 @@ def get_videos_by_topness():
                 seen.add(url)
                 yield url
 
-def get_fresh_playlist(youtube, title):
+def get_playlist(youtube, title):
     for playlist in youtube.playlists().list(mine=True, part='snippet').execute()['items']:
         if playlist['snippet']['title'] == title:
-            youtube.playlists().delete(id=playlist['id']).execute()
-            break
-    return youtube.playlists().insert(body={'snippet': {'title': title}, 'status': {'privacyStatus': 'public'}}, part='snippet,status').execute()
+            return playlist
+    return None
+
+def get_fresh_playlist(youtube, title):
+    playlist = get_playlist(youtube, title)
+    if not playlist:
+        return youtube.playlists().insert(body={'snippet': {'title': title}, 'status': {'privacyStatus': 'public'}}, part='snippet,status').execute()
+    items = youtube.playlistItems().list(playlistId=playlist['id'], part='id', maxResults=50).execute()['items']
+    for item in items:
+        youtube.playlistItems().delete(id=item['id']).execute()
+    return playlist
 
 def add_video_url(youtube, playlist, video_id):
     try:
