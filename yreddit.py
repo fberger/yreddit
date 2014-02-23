@@ -59,7 +59,7 @@ def get_fresh_playlist(youtube, title):
 
 def add_video_url(youtube, playlist, video_id):
     try:
-        print youtube.playlistItems().insert(part='snippet', body={'snippet': {
+        youtube.playlistItems().insert(part='snippet', body={'snippet': {
             'playlistId': playlist['id'],
             'resourceId': {
                 'kind': 'youtube#video',
