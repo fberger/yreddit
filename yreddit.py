@@ -21,7 +21,7 @@ def client():
                                    scope=YOUTUBE_READ_WRITE_SCOPE)
     storage = Storage("oauth2.json")
     credentials = storage.get()
-    
+
     if credentials is None or credentials.invalid:
         logging.error('Invalid credentials')
         credentials = run(flow, storage)
@@ -34,7 +34,7 @@ def get_youtube_urls(videos):
         if not v.media:
             logging.info('Skipping non media video submission %s', v)
             continue
-        oembed = v.media.get('oembed', {})        
+        oembed = v.media.get('oembed', {})
         if 'provider_url' not in oembed or oembed['provider_url'] != 'http://www.youtube.com/':
             logging.info('Skipping non-youtube video submission: %s', oembed)
             continue
@@ -67,7 +67,7 @@ def add_video_url(youtube, playlist, video_id):
                 }}}).execute()
     except HttpError as e:
         logging.exception('Could not add video %s\nHttpError content: %s', video_id, e.content)
-    
+
 def to_id(url):
     _, id = url.split('=')
     return id
