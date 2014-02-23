@@ -55,7 +55,7 @@ def get_fresh_playlist(youtube, title):
         if playlist['snippet']['title'] == title:
             youtube.playlists().delete(id=playlist['id']).execute()
             break
-    return youtube.playlists().insert(body={'snippet': {'title': title}}, part='snippet').execute()
+    return youtube.playlists().insert(body={'snippet': {'title': title}, 'status': {'privacyStatus': 'public'}}, part='snippet,status').execute()
 
 def add_video_url(youtube, playlist, video_id):
     try:
