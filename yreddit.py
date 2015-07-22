@@ -35,7 +35,7 @@ def get_youtube_urls(videos):
             logging.info('Skipping non media video submission %s', v)
             continue
         oembed = v.media.get('oembed', {})
-        if 'provider_url' not in oembed or oembed['provider_url'] != 'http://www.youtube.com/':
+        if 'provider_url' not in oembed or oembed['provider_url'] != 'https://www.youtube.com/':
             logging.info('Skipping non-youtube video submission: %s', oembed)
             continue
         yield oembed['url']
