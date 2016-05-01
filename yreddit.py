@@ -7,6 +7,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.tools import run
 import httplib2
 import logging
+import re
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,7 +30,18 @@ def client():
     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
                   http=credentials.authorize(httplib2.Http()))
 
-def get_youtube_urls(videos):
+def to_id(url):
+    _, id = url.split('=')
+    return id
+
+def extract_video_id_from_html(html):
+    match = re.search('src="[^"]+embed/([^?]+)', html)
+    if not match:
+        logging.info('embedded html does not contain simple youtube embed url: %s', html)
+        return None
+    return match.group(1)
+
+def get_youtube_video_ids(videos):
     for v in videos:
         if not v.media:
             logging.info('Skipping non media video submission %s', v)
@@ -38,17 +50,24 @@ def get_youtube_urls(videos):
         if 'provider_url' not in oembed or oembed['provider_url'] != 'https://www.youtube.com/':
             logging.info('Skipping non-youtube video submission: %s', oembed)
             continue
-        yield oembed['url']
+        if 'url' in oembed:
+            yield to_id(oembed['url'])
+        if 'html' in oembed:
+            video_id = extract_video_id_from_html(oembed['html'])
+            if video_id:
+                yield video_id
+        else:
+            logging.info('no video id extracted from oembed: %s', oembed)
 
 def get_videos_by_topness():
     reddit = praw.Reddit(user_agent='yreddit')
     videos = reddit.get_subreddit('videos')
     seen = set()
     for generator in (videos.get_top_from_day(), videos.get_top_from_hour(), videos.get_hot()):
-        for url in get_youtube_urls(generator):
-            if url not in seen:
-                seen.add(url)
-                yield url
+        for id in get_youtube_video_ids(generator):
+            if id not in seen:
+                seen.add(id)
+                yield id
 
 def get_playlist(youtube, title):
     for playlist in youtube.playlists().list(mine=True, part='snippet').execute()['items']:
@@ -76,10 +95,6 @@ def add_video_url(youtube, playlist, video_id):
     except HttpError as e:
         logging.exception('Could not add video %s\nHttpError content: %s', video_id, e.content)
 
-def to_id(url):
-    _, id = url.split('=')
-    return id
-
 def watched_videos(youtube):
     history_playlist_id = youtube.channels().list(mine=True, part='contentDetails').execute()['items'][0]['contentDetails']['relatedPlaylists']['watchHistory']
     for video in youtube.playlistItems().list(playlistId=history_playlist_id, part='contentDetails', maxResults=50).execute()['items']:
@@ -90,8 +105,7 @@ def main():
         youtube = client()
         watched_videos_ids = set(watched_videos(youtube))
         playlist = get_fresh_playlist(youtube, "Today's top reddit videos")
-        for url in get_videos_by_topness():
-            video_id = to_id(url)
+        for video_id in get_videos_by_topness():
             if video_id not in watched_videos_ids:
                 add_video_url(youtube, playlist, video_id)
     except:
