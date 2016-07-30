@@ -95,10 +95,21 @@ def add_video_url(youtube, playlist, video_id):
     except HttpError as e:
         logging.exception('Could not add video %s\nHttpError content: %s', video_id, e.content)
 
-def watched_videos(youtube):
+def watched_videos(youtube, fetch_count=50):
     history_playlist_id = youtube.channels().list(mine=True, part='contentDetails').execute()['items'][0]['contentDetails']['relatedPlaylists']['watchHistory']
-    for video in youtube.playlistItems().list(playlistId=history_playlist_id, part='contentDetails', maxResults=50).execute()['items']:
-        yield video['contentDetails']['videoId']
+    next_page_token = None
+    while fetch_count > 0:
+        page = youtube.playlistItems().list(playlistId=history_playlist_id,
+                                            part='contentDetails',
+                                            maxResults=min(50, fetch_count),
+                                            pageToken=next_page_token).execute()
+        fetch_count -= len(page['items'])
+        for video in page['items']:
+            yield video['contentDetails']['videoId']
+        if 'nextPageToken' not in page:
+            break
+        next_page_token = page['nextPageToken']
+
 
 def main():
     try:
