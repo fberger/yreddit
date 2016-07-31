@@ -142,6 +142,12 @@ class ShelveWrapper:
         else:
             self._shelve_store[key] = value
 
+    def __getitem__(self, key):
+        if type(key) == unicode:
+            return self._shelve_store[key.encode(UTF8)]
+        else:
+            return self._shelve_store[key]
+
     def close(self):
         self._shelve_store.close()
 
