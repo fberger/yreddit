@@ -167,16 +167,16 @@ def load_addition_history():
 def main():
     try:
         youtube = client()
-        with load_and_update_watch_history(watched_video_ids(youtube, fetch_count=1000)) as watch_history_shelve, \
-             load_addition_history() as addition_history:
-            playlist = get_fresh_playlist(youtube, "Today's top reddit videos")
-            for video_id in get_videos_by_topness():
-                if video_id not in watch_history_shelve \
-                   and (video_id not in addition_history \
-                        or (time.time() - addition_history[video_id]) < READDITION_GRACE_SECONDS):
-                    add_video_url(youtube, playlist, video_id)
-                    if video_id not in addition_history:
-                        addition_history[video_id] = time.time()
+        with load_and_update_watch_history(watched_video_ids(youtube, fetch_count=1000)) as watch_history_shelve:
+            with load_addition_history() as addition_history:
+                playlist = get_fresh_playlist(youtube, "Today's top reddit videos")
+                for video_id in get_videos_by_topness():
+                    if video_id not in watch_history_shelve \
+                       and (video_id not in addition_history \
+                            or (time.time() - addition_history[video_id]) < READDITION_GRACE_SECONDS):
+                        add_video_url(youtube, playlist, video_id)
+                        if video_id not in addition_history:
+                            addition_history[video_id] = time.time()
     except:
         logging.exception('Unexpected error')
 
