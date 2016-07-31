@@ -1,4 +1,4 @@
 yreddit
 =======
 
-Create a playlist with Reddit's top videos of the day.
+Create a Youtube playlist with Reddit's top videos of the day.
