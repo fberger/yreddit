@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from apiclient.discovery import build
-from apiclient.http import HttpError, BatchHttpRequest
+from apiclient.http import HttpError
 from contextlib import contextmanager
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
@@ -89,7 +89,7 @@ def get_fresh_playlist(youtube, title):
     playlist = get_playlist(youtube, title)
     if not playlist:
         return youtube.playlists().insert(body={'snippet': {'title': title}, 'status': {'privacyStatus': 'public'}}, part='snippet,status').execute()
-    for item in fetch_playlist_items(youtube, playlist['id'], 'id', fetch_count=500):
+    for item in list(fetch_playlist_items(youtube, playlist['id'], 'id', fetch_count=500)):
         youtube.playlistItems().delete(id=item['id']).execute()
     return playlist
 
@@ -176,7 +176,7 @@ def main():
         with load_and_update_watch_history(watched_video_ids(youtube, fetch_count=1000)) as watch_history_shelve:
             with load_addition_history() as addition_history:
                 playlist = get_fresh_playlist(youtube, "Today's top reddit videos")
-                for video_id in get_videos_by_topness():
+                for video_id in sorted(get_videos_by_topness()):
                     if video_id not in watch_history_shelve \
                        and (video_id not in addition_history \
                             or (time.time() - addition_history[video_id]) < READDITION_GRACE_SECONDS):
