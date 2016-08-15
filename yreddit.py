@@ -74,7 +74,8 @@ def get_videos_by_topness():
                       videos.get_hot(),
                       reddit.get_subreddit('ArtisanVideos').get_hot(),
                       reddit.get_subreddit('cookingvideos').get_top_from_week(),
-                      reddit.get_subreddit('EngineeringPorn').get_hot()):
+                      reddit.get_subreddit('EngineeringPorn').get_hot(),
+                      reddit.get_subreddit('StandUpComedy').get_top_from_day()):
         for id in get_youtube_video_ids(generator):
             if id not in seen:
                 seen.add(id)
